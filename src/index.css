@@ -1,0 +1,19 @@
+@import 'tailwindcss';
+
+/* Carrossel de categorias: rola no dedo, sem barra visível. */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Evita o "pulo" horizontal quando um modal trava o scroll do body. */
+html {
+  scrollbar-gutter: stable;
+}
+
+body {
+  margin: 0;
+}
