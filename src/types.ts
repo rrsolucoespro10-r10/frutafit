@@ -37,6 +37,8 @@ export interface CustomerDetails {
   name: string;
   phone: string;
   deliveryType: DeliveryType;
+  /** id da cidade em CITIES. A rota, o mínimo e o frete dependem dela. */
+  city: string;
   address: string;
   neighborhood: string;
   complement: string;
@@ -53,6 +55,14 @@ export interface OrderTotals {
   missingForFreeShipping: number;
   missingForMinOrder: number;
   meetsMinOrder: boolean;
+  /**
+   * Mínimo e meta de frete grátis vigentes para esta cidade e este tipo de
+   * entrega. Ficam nos totais para que os componentes não precisem reabrir o
+   * config e recalcular a regra por conta própria — foi assim que tela e
+   * mensagem já divergiram uma vez.
+   */
+  minOrderValue: number;
+  freeShippingThreshold: number;
 }
 
 export type FormErrors = Partial<Record<keyof CustomerDetails, string>>;

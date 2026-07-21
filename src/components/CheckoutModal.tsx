@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Send, Store, Truck, X } from 'lucide-react';
 import type { CustomerDetails, FormErrors, OrderTotals, PaymentMethod } from '../types';
-import { DELIVERY_ZONES, PAYMENT_LABELS, PICKUP_ADDRESS } from '../config';
+import { CITIES, PAYMENT_LABELS, deliveryPromise, getCity } from '../config';
 import { brl, isValidPhone, maskPhone } from '../lib/format';
 import { useModalBehavior } from '../hooks/useModalBehavior';
 
@@ -26,6 +26,9 @@ function validate(customer: CustomerDetails): FormErrors {
   if (customer.deliveryType === 'delivery') {
     if (customer.address.trim().length < 6) {
       errors.address = 'Informe rua e número.';
+    }
+    if (!customer.city) {
+      errors.city = 'Escolha a cidade.';
     }
     if (!customer.neighborhood) {
       errors.neighborhood = 'Escolha o bairro para calcularmos a entrega.';
@@ -54,8 +57,17 @@ export function CheckoutModal({
 }: Props) {
   const [errors, setErrors] = useState<FormErrors>({});
   const isDelivery = customer.deliveryType === 'delivery';
+  const city = getCity(customer.city);
+  const isScheduled = city.mode === 'scheduled';
 
   useModalBehavior(onClose);
+
+  /**
+   * Trocar de cidade zera o bairro: id de bairro de Caruaru não existe em Santa
+   * Cruz, e um bairro órfão faria o frete cair na taxa padrão sem o cliente
+   * perceber.
+   */
+  const handleCityChange = (cityId: string) => onChange({ city: cityId, neighborhood: '' });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,9 +140,17 @@ export function CheckoutModal({
                 );
               })}
             </div>
-            {!isDelivery && (
-              <p className="text-xs text-slate-500 mt-2">Retirada em {PICKUP_ADDRESS}.</p>
-            )}
+            {!isDelivery &&
+              (city.pickup ? (
+                <p className="text-xs text-slate-500 mt-2">
+                  Retirada em {city.pickup.address} · {city.pickup.hours}.
+                </p>
+              ) : (
+                <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2.5 mt-2">
+                  Ainda não temos ponto de retirada em {city.name}. Escolha entrega ou fale com a
+                  gente no WhatsApp.
+                </p>
+              ))}
           </div>
 
           <div>
@@ -169,6 +189,35 @@ export function CheckoutModal({
           {isDelivery && (
             <>
               <div>
+                <label htmlFor="city" className="block text-xs font-semibold text-slate-700 mb-1">
+                  Cidade
+                </label>
+                <select
+                  id="city"
+                  value={customer.city}
+                  onChange={(e) => handleCityChange(e.target.value)}
+                  className={`${inputClass(errors.city)} bg-white`}
+                >
+                  {CITIES.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} — {c.state}
+                    </option>
+                  ))}
+                </select>
+                <FieldError message={errors.city} />
+
+                {/* Rota agendada: a promessa é data, nunca minutos. Dizer isso
+                    aqui, antes do pagamento, evita a cobrança de "cadê meu
+                    pedido?" duas horas depois. */}
+                {isScheduled && (
+                  <p className="text-xs text-emerald-900 bg-emerald-50 border border-emerald-100 rounded-lg p-2.5 mt-2">
+                    Em {city.name} entregamos em dias fixos. Seu pedido chega{' '}
+                    <strong>{deliveryPromise(city, customer.neighborhood)}</strong>.
+                  </p>
+                )}
+              </div>
+
+              <div>
                 <label htmlFor="address" className="block text-xs font-semibold text-slate-700 mb-1">
                   Rua e número
                 </label>
@@ -198,9 +247,10 @@ export function CheckoutModal({
                   className={`${inputClass(errors.neighborhood)} bg-white`}
                 >
                   <option value="">Selecione o bairro</option>
-                  {DELIVERY_ZONES.map((zone) => (
+                  {city.zones.map((zone) => (
                     <option key={zone.id} value={zone.id}>
-                      {zone.name} — {brl(zone.fee)} · ~{zone.etaMinutes} min
+                      {zone.name} — {brl(zone.fee)}
+                      {zone.etaMinutes ? ` · ~${zone.etaMinutes} min` : ''}
                     </option>
                   ))}
                 </select>

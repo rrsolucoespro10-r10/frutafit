@@ -2,7 +2,6 @@ import { ArrowRight, Minus, Plus, ShoppingBag, Trash2, X } from 'lucide-react';
 import type { CartItem, OrderTotals } from '../types';
 import { brl } from '../lib/format';
 import { lineTotal, unitPrice } from '../lib/cart';
-import { FREE_SHIPPING_THRESHOLD, MIN_ORDER_VALUE } from '../config';
 import { useModalBehavior } from '../hooks/useModalBehavior';
 
 interface Props {
@@ -29,7 +28,10 @@ export function CartDrawer({
   // Progresso direto sobre a meta: a versão anterior derivava o denominador de
   // subtotal + missingForFreeShipping, que só por coincidência dá a meta e vira
   // 100% assim que o frete fica grátis.
-  const freeShippingProgress = Math.min(100, (totals.subtotal / FREE_SHIPPING_THRESHOLD) * 100);
+  const freeShippingProgress = Math.min(
+    100,
+    (totals.subtotal / totals.freeShippingThreshold) * 100,
+  );
 
   return (
     <div
@@ -205,7 +207,7 @@ export function CartDrawer({
 
             {!totals.meetsMinOrder && (
               <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2.5">
-                Pedido mínimo de {brl(MIN_ORDER_VALUE)}. Faltam{' '}
+                Pedido mínimo de {brl(totals.minOrderValue)}. Faltam{' '}
                 <strong>{brl(totals.missingForMinOrder)}</strong>.
               </p>
             )}

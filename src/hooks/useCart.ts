@@ -1,11 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import type { Addon, CartItem, DeliveryType, OrderTotals, Product } from '../types';
-import {
-  FREE_SHIPPING_THRESHOLD,
-  MAX_ITEM_QUANTITY,
-  MIN_ORDER_VALUE,
-  getDeliveryFee,
-} from '../config';
+import { MAX_ITEM_QUANTITY, PICKUP_MIN_ORDER, getCity, getDeliveryFee } from '../config';
 import { buildCartItemId, lineTotal } from '../lib/cart';
 import { usePersistentState } from './usePersistentState';
 
@@ -65,13 +60,20 @@ export function useCart() {
   const clearCart = useCallback(() => setCart([]), [setCart]);
 
   const getTotals = useCallback(
-    (deliveryType: DeliveryType, neighborhoodId: string): OrderTotals => {
+    (deliveryType: DeliveryType, cityId: string, neighborhoodId: string): OrderTotals => {
       const subtotal = cart.reduce((acc, item) => acc + lineTotal(item), 0);
       const itemCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
+      const city = getCity(cityId);
+      const isDelivery = deliveryType === 'delivery';
+
+      // Retirada não tem custo de rota, então não carrega o mínimo da rota.
+      const minOrderValue = isDelivery ? city.minOrder : PICKUP_MIN_ORDER;
+      const freeShippingThreshold = city.freeShippingThreshold;
+
       let deliveryFee = 0;
-      if (deliveryType === 'delivery' && subtotal < FREE_SHIPPING_THRESHOLD) {
-        deliveryFee = getDeliveryFee(neighborhoodId);
+      if (isDelivery && subtotal < freeShippingThreshold) {
+        deliveryFee = getDeliveryFee(cityId, neighborhoodId);
       }
 
       return {
@@ -79,9 +81,11 @@ export function useCart() {
         deliveryFee,
         total: subtotal + deliveryFee,
         itemCount,
-        missingForFreeShipping: Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal),
-        missingForMinOrder: Math.max(0, MIN_ORDER_VALUE - subtotal),
-        meetsMinOrder: subtotal >= MIN_ORDER_VALUE,
+        missingForFreeShipping: isDelivery ? Math.max(0, freeShippingThreshold - subtotal) : 0,
+        missingForMinOrder: Math.max(0, minOrderValue - subtotal),
+        meetsMinOrder: subtotal >= minOrderValue,
+        minOrderValue,
+        freeShippingThreshold,
       };
     },
     [cart],

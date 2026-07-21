@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { MapPin, Search, ShieldCheck, ShoppingBag, Sparkles, X } from 'lucide-react';
 import type { Addon, CustomerDetails, Product } from './types';
 import { CATEGORIES, PRODUCTS } from './data/products';
-import { DELIVERY_ZONES, isStoreOpen } from './config';
+import { DEFAULT_CITY_ID, getCity, getZone, isStoreOpen } from './config';
 import { brl, normalize } from './lib/format';
 import {
   buildOrderMessage,
@@ -22,6 +22,7 @@ const EMPTY_CUSTOMER: CustomerDetails = {
   name: '',
   phone: '',
   deliveryType: 'delivery',
+  city: DEFAULT_CITY_ID,
   address: '',
   neighborhood: '',
   complement: '',
@@ -38,14 +39,17 @@ export default function App() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // v3: o cadastro salvo em v2 não tem `city`. Sem a virada de chave, quem já
+  // usou o app hidrataria com city undefined e o <select> de cidade viraria
+  // descontrolado — some o frete e o React reclama no console.
   const [customer, setCustomer] = usePersistentState<CustomerDetails>(
-    'fruta_fit_customer_v2',
+    'fruta_fit_customer_v3',
     EMPTY_CUSTOMER,
   );
 
   const { cart, itemCount, addItem, changeQuantity, removeItem, clearCart, getTotals } = useCart();
 
-  const totals = getTotals(customer.deliveryType, customer.neighborhood);
+  const totals = getTotals(customer.deliveryType, customer.city, customer.neighborhood);
 
   // Reavalia o horário de tempos em tempos: quem deixa a aba aberta a tarde
   // inteira continuaria vendo "loja aberta" depois do fechamento e mandaria
@@ -108,7 +112,8 @@ export default function App() {
     openWhatsApp(buildOrderMessage(cart, customer, totals, orderCode));
   };
 
-  const currentZone = DELIVERY_ZONES.find((z) => z.id === customer.neighborhood);
+  const currentCity = getCity(customer.city);
+  const currentZone = getZone(customer.city, customer.neighborhood);
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-slate-800 font-sans antialiased pb-28 selection:bg-emerald-200">
@@ -134,10 +139,12 @@ export default function App() {
             className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-full text-xs font-semibold text-emerald-800 hover:bg-emerald-100 transition-colors"
           >
             <MapPin className="w-3.5 h-3.5 text-emerald-600" />
-            <span className="max-w-[110px] truncate">
+            <span className="max-w-[130px] truncate">
               {customer.deliveryType === 'pickup'
                 ? 'Retirada'
-                : currentZone?.name ?? 'Definir bairro'}
+                : currentZone
+                  ? `${currentZone.name}, ${currentCity.name}`
+                  : `Definir bairro · ${currentCity.name}`}
             </span>
           </button>
         </div>

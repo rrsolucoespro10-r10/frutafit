@@ -14,20 +14,36 @@ npm run build                # tsc -b && vite build
 
 `.env.local` já é ignorado pelo git (`*.local`).
 
-## Configurar antes de vender
+## Área de cobertura
 
-Tudo que muda a operação vive em [`src/config.ts`](src/config.ts) — nenhuma
-dessas mudanças exige mexer em componente:
+Operação no Agreste de Pernambuco. Cada cidade é uma entrada em `CITIES`
+([`src/config.ts`](src/config.ts)) com a sua própria regra:
 
-| Constante                 | O que é                                                 |
-| ------------------------- | ------------------------------------------------------- |
-| `MIN_ORDER_VALUE`         | Pedido mínimo. Bloqueia o checkout abaixo disso.         |
-| `FREE_SHIPPING_THRESHOLD` | Valor que zera o frete e alimenta a barra de progresso.  |
-| `DELIVERY_ZONES`          | Bairros atendidos, taxa e previsão em minutos.           |
-| `DEFAULT_DELIVERY_FEE`    | Taxa usada enquanto o cliente não escolheu bairro.       |
-| `PICKUP_ADDRESS`          | Endereço mostrado na opção "retirar no local".           |
-| `OPENING_HOURS`           | Horário por dia da semana (0 = domingo).                 |
-| `MAX_ITEM_QUANTITY`       | Teto de unidades por linha do carrinho.                  |
+| Cidade                   | Modo        | Rota            | Mínimo | Frete grátis |
+| ------------------------ | ----------- | --------------- | ------ | ------------ |
+| Caruaru (sede)           | `same_day`  | diária          | R$ 35  | R$ 60        |
+| Taquaritinga do Norte    | `scheduled` | quinta          | R$ 60  | R$ 120       |
+| Santa Cruz do Capibaribe | `scheduled` | terça e sexta   | R$ 80  | R$ 150       |
+
+`same_day` promete minutos; `scheduled` promete **data**. Produto congelado
+viajando 75 km sem dia certo é reclamação garantida — por isso cidade distante
+tem mínimo maior e a tela mostra "chega sexta-feira, 24/07" em vez de "~50 min".
+Pedido feito depois do `cutoffHour` no dia da rota cai para a rota seguinte.
+
+> **Os bairros e as taxas estão semeados, não confirmados.** Revise um a um antes
+> de divulgar o link: bairro listado que a rota não atende vira pedido cancelado.
+
+## Outras chaves de operação
+
+| Constante           | O que é                                             |
+| ------------------- | --------------------------------------------------- |
+| `DEFAULT_CITY_ID`   | Cidade pré-selecionada no checkout.                  |
+| `PICKUP_MIN_ORDER`  | Mínimo para retirada (sem custo de rota).            |
+| `OPENING_HOURS`     | Horário de recebimento de pedidos (0 = domingo).     |
+| `MAX_ITEM_QUANTITY` | Teto de unidades por linha do carrinho.              |
+
+Enquanto o cliente não escolhe o bairro, o frete exibido é a **maior** taxa da
+cidade, de propósito: se o número tem que mudar, que mude para baixo.
 
 O catálogo está em [`src/data/products.ts`](src/data/products.ts).
 
@@ -74,9 +90,10 @@ que formata texto não deve arrastar React junto.
 
 ## Pontos em aberto (decisão de negócio, não de código)
 
-- **Pedido mínimo vale para retirada.** Hoje `MIN_ORDER_VALUE` bloqueia também
-  quem vai buscar na loja, onde não existe custo de entrega. Quem quer um kit de
-  R$ 14,90 e passaria aí para pegar simplesmente não consegue comprar. Se não for
-  intencional, o mínimo deveria valer só para `delivery`.
+- **Bairros e taxas das três cidades** precisam ser confirmados contra a rota real.
+- **Preços, gramatura e rendimento dos kits** ainda são os de exemplo.
+- **Cadeia de frio até Santa Cruz (75 km).** O código já promete data em vez de
+  minutos, mas a caixa térmica e o tempo máximo em trânsito são decisão de
+  operação — e é o que determina se dá para atender a cidade toda ou só um raio.
 - **Imagens hospedadas no Unsplash.** Além de não serem o produto real, são
   dependência externa no caminho crítico do carregamento em 4G.

@@ -1,5 +1,12 @@
 import type { CartItem, CustomerDetails, OrderTotals } from '../types';
-import { DELIVERY_ZONES, PAYMENT_LABELS, PICKUP_ADDRESS, STORE_NAME, WHATSAPP_NUMBER } from '../config';
+import {
+  PAYMENT_LABELS,
+  STORE_NAME,
+  WHATSAPP_NUMBER,
+  deliveryPromise,
+  getCity,
+  getZone,
+} from '../config';
 import { brl, onlyDigits } from './format';
 import { lineTotal } from './cart';
 
@@ -9,7 +16,8 @@ export function buildOrderMessage(
   totals: OrderTotals,
   orderCode: string,
 ): string {
-  const zone = DELIVERY_ZONES.find((z) => z.id === customer.neighborhood);
+  const city = getCity(customer.city);
+  const zone = getZone(customer.city, customer.neighborhood);
   const lines: string[] = [];
 
   lines.push(`🍓 *NOVO PEDIDO — ${STORE_NAME.toUpperCase()}*`);
@@ -21,12 +29,19 @@ export function buildOrderMessage(
 
   if (customer.deliveryType === 'delivery') {
     lines.push('🛵 *Entrega em casa*');
+    lines.push(`🏙️ *Cidade:* ${city.name} — ${city.state}`);
     lines.push(`🏠 ${customer.address}`);
-    if (zone) lines.push(`📍 Bairro: ${zone.name} (previsão ~${zone.etaMinutes} min)`);
+    if (zone) lines.push(`📍 Bairro: ${zone.name}`);
     if (customer.complement.trim()) lines.push(`ℹ️ ${customer.complement}`);
+    // A promessa vai junto do pedido para que a cozinha monte a rota pelo que
+    // foi prometido ao cliente, e não pela ordem de chegada das mensagens.
+    lines.push(`🗓️ *Entrega prevista:* ${deliveryPromise(city, customer.neighborhood)}`);
   } else {
     lines.push('🏪 *Retirada no local*');
-    lines.push(`📍 ${PICKUP_ADDRESS}`);
+    if (city.pickup) {
+      lines.push(`📍 ${city.pickup.address}`);
+      lines.push(`🕒 ${city.pickup.hours}`);
+    }
   }
 
   lines.push('');
