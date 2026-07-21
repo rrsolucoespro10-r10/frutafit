@@ -1,6 +1,7 @@
 import { Plus } from 'lucide-react';
 import type { Product } from '../types';
 import { brl } from '../lib/format';
+import { cheapestVariant, packSavingsPercent } from '../lib/cart';
 
 interface Props {
   product: Product;
@@ -8,6 +9,11 @@ interface Props {
 }
 
 export function ProductCard({ product, onSelect }: Props) {
+  // "A partir de" usa a unidade avulsa: mostrar o preço do pacote na vitrine
+  // faria o cliente achar caro antes de entender que são 10 porções.
+  const entry = cheapestVariant(product);
+  const savings = packSavingsPercent(product);
+
   return (
     <button
       type="button"
@@ -31,9 +37,12 @@ export function ProductCard({ product, onSelect }: Props) {
       <div className="flex-1 flex flex-col justify-between min-w-0">
         <div>
           <div className="flex items-start justify-between gap-1">
-            <h4 className="font-bold text-slate-900 text-sm truncate leading-tight">{product.name}</h4>
-            <span className="text-xs font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-lg shrink-0">
-              {brl(product.price)}
+            <h4 className="font-bold text-slate-900 text-sm truncate leading-tight">
+              {product.name}
+            </h4>
+            <span className="text-right shrink-0">
+              <span className="block text-[9px] text-slate-400 leading-none">a partir de</span>
+              <span className="text-xs font-extrabold text-emerald-700">{brl(entry.price)}</span>
             </span>
           </div>
 
@@ -57,15 +66,23 @@ export function ProductCard({ product, onSelect }: Props) {
         </div>
 
         <div className="flex items-center justify-between pt-2 border-t border-slate-50 mt-2">
-          <div className="flex items-center gap-2 text-[10px] text-slate-400 font-medium">
-            <span>{product.yieldVolume}</span>
-            <span aria-hidden>•</span>
-            <span>{product.calories} kcal</span>
-          </div>
+          {/* A economia do pacote é o argumento de venda central do modelo
+              semanal: aparece já na vitrine, não só depois de abrir o produto. */}
+          {savings > 0 ? (
+            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md">
+              Pacote 10 un · −{savings}%
+            </span>
+          ) : (
+            <div className="flex items-center gap-2 text-[10px] text-slate-400 font-medium">
+              <span>{product.unitYield}</span>
+              <span aria-hidden>•</span>
+              <span>{product.calories} kcal</span>
+            </div>
+          )}
 
           <span className="bg-emerald-600 group-hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 shadow-sm shadow-emerald-600/20">
             <Plus className="w-3.5 h-3.5" />
-            Adicionar
+            Escolher
           </span>
         </div>
       </div>

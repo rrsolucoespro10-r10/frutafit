@@ -1,15 +1,22 @@
 import { useState } from 'react';
 import { Check, Minus, Plus, X } from 'lucide-react';
-import type { Addon, Product } from '../types';
+import type { Addon, Product, ProductVariant } from '../types';
 import { AVAILABLE_ADDONS } from '../data/products';
 import { MAX_ITEM_QUANTITY } from '../config';
 import { brl } from '../lib/format';
+import { cheapestVariant, pricePerUnit } from '../lib/cart';
 import { useModalBehavior } from '../hooks/useModalBehavior';
 
 interface Props {
   product: Product;
   onClose: () => void;
-  onConfirm: (product: Product, quantity: number, addons: Addon[], notes: string) => void;
+  onConfirm: (
+    product: Product,
+    variant: ProductVariant,
+    quantity: number,
+    addons: Addon[],
+    notes: string,
+  ) => void;
 }
 
 /**
@@ -21,6 +28,9 @@ export function ProductModal({ product, onClose, onConfirm }: Props) {
   const [quantity, setQuantity] = useState(1);
   const [addons, setAddons] = useState<Addon[]>([]);
   const [notes, setNotes] = useState('');
+  // Abre na unidade avulsa: é a porta de entrada. Empurrar o pacote de cara
+  // assusta quem nunca provou, e o desconto na tela já faz o trabalho de subir.
+  const [variant, setVariant] = useState<ProductVariant>(() => cheapestVariant(product));
 
   useModalBehavior(onClose);
 
@@ -31,8 +41,11 @@ export function ProductModal({ product, onClose, onConfirm }: Props) {
         : [...prev, addon],
     );
 
-  const addonsTotal = addons.reduce((sum, a) => sum + a.price, 0);
-  const total = (product.price + addonsTotal) * quantity;
+  // Adicional é por porção: num pacote de 10 ele entra dez vezes, porque
+  // fisicamente vai em dez porções.
+  const addonsPerUnit = addons.reduce((sum, a) => sum + a.price, 0);
+  const total = (variant.price + addonsPerUnit * variant.units) * quantity;
+  const baseUnitPrice = pricePerUnit(cheapestVariant(product));
 
   return (
     <div
@@ -69,11 +82,63 @@ export function ProductModal({ product, onClose, onConfirm }: Props) {
             <h2 className="text-xl font-extrabold text-slate-900 leading-tight">{product.name}</h2>
             <p className="text-sm text-slate-500 mt-0.5">{product.tagline}</p>
             <div className="flex items-center gap-2 text-[11px] text-slate-400 font-medium mt-2">
-              <span>{product.weight}</span>
+              <span>{product.unitWeight} por porção</span>
               <span aria-hidden>•</span>
-              <span>rende {product.yieldVolume}</span>
+              <span>rende {product.unitYield}</span>
               <span aria-hidden>•</span>
               <span>{product.calories} kcal</span>
+            </div>
+          </div>
+
+          {/* Escolha do formato. Fica antes dos adicionais de propósito: o
+              cliente decide o tamanho da compra enquanto ainda está animado
+              com o produto, não depois de somar extras. */}
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+              Como você quer levar
+            </h3>
+            <div className="space-y-2">
+              {product.variants.map((v) => {
+                const selected = v.id === variant.id;
+                const perUnit = pricePerUnit(v);
+                const discount =
+                  v.units > 1 ? Math.round((1 - perUnit / baseUnitPrice) * 100) : 0;
+                return (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => setVariant(v)}
+                    aria-pressed={selected}
+                    className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                      selected
+                        ? 'border-emerald-500 bg-emerald-50'
+                        : 'border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <span
+                      className={`w-4 h-4 rounded-full border-4 shrink-0 ${
+                        selected ? 'border-emerald-600 bg-white' : 'border-slate-200 bg-white'
+                      }`}
+                    />
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-sm font-semibold text-slate-800 leading-snug">
+                        {v.label}
+                      </span>
+                      <span className="block text-[11px] text-slate-500">
+                        {brl(perUnit)} por porção{' '}
+                        {discount > 0 && (
+                          <span className="ml-1.5 font-bold text-emerald-700">
+                            economize {discount}%
+                          </span>
+                        )}
+                      </span>
+                    </span>
+                    <span className="text-sm font-extrabold text-slate-900 shrink-0">
+                      {brl(v.price)}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -121,8 +186,15 @@ export function ProductModal({ product, onClose, onConfirm }: Props) {
                       {selected && <Check className="w-3.5 h-3.5 text-white" />}
                     </span>
                     <span className="flex-1 text-sm text-slate-700 leading-snug">{addon.name}</span>
-                    <span className="text-sm font-bold text-emerald-700 shrink-0">
-                      + {brl(addon.price)}
+                    <span className="text-right shrink-0">
+                      <span className="block text-sm font-bold text-emerald-700">
+                        + {brl(addon.price * variant.units)}
+                      </span>
+                      {variant.units > 1 && (
+                        <span className="block text-[10px] text-slate-400 leading-none">
+                          {brl(addon.price)} × {variant.units}
+                        </span>
+                      )}
                     </span>
                   </button>
                 );
@@ -177,7 +249,7 @@ export function ProductModal({ product, onClose, onConfirm }: Props) {
 
           <button
             type="button"
-            onClick={() => onConfirm(product, quantity, addons, notes)}
+            onClick={() => onConfirm(product, variant, quantity, addons, notes)}
             className="flex-1 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold py-3.5 rounded-xl shadow-md transition-colors flex items-center justify-between px-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
           >
             <span className="text-sm">Adicionar à sacola</span>

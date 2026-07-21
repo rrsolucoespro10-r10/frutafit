@@ -44,6 +44,12 @@ export interface City {
   id: string;
   name: string;
   state: string;
+  /**
+   * Cidade fora do ar continua aqui, só não aparece para o cliente. Apagar o
+   * registro quebraria pedidos antigos que apontam para ela; basta virar para
+   * `true` no dia em que a rota existir.
+   */
+  active: boolean;
   mode: DeliveryMode;
   /** Dias em que a van roda (0 = domingo). Só para `scheduled`. */
   deliveryDays?: number[];
@@ -62,80 +68,83 @@ export interface City {
 
 export const CITIES: City[] = [
   {
-    id: 'caruaru',
-    name: 'Caruaru',
-    state: 'PE',
-    mode: 'same_day',
-    minOrder: 35.0,
-    freeShippingThreshold: 60.0,
-    pickup: {
-      address: 'CONFIRME: Rua Exemplo, 123 — Centro, Caruaru',
-      hours: 'seg a sex 8h–18h, sáb 8h–14h',
-    },
-    zones: [
-      { id: 'centro', name: 'Centro', fee: 6.0, etaMinutes: 40 },
-      { id: 'mauricio-de-nassau', name: 'Maurício de Nassau', fee: 6.0, etaMinutes: 40 },
-      { id: 'petropolis', name: 'Petrópolis', fee: 7.0, etaMinutes: 45 },
-      { id: 'universitario', name: 'Universitário', fee: 7.0, etaMinutes: 45 },
-      { id: 'indianopolis', name: 'Indianópolis', fee: 8.0, etaMinutes: 50 },
-      { id: 'boa-vista', name: 'Boa Vista', fee: 8.0, etaMinutes: 50 },
-      { id: 'sao-francisco', name: 'São Francisco', fee: 8.0, etaMinutes: 50 },
-      { id: 'salgado', name: 'Salgado', fee: 9.0, etaMinutes: 55 },
-      { id: 'cedro', name: 'Cedro', fee: 9.0, etaMinutes: 55 },
-      { id: 'kennedy', name: 'Kennedy', fee: 9.0, etaMinutes: 55 },
-      { id: 'nova-caruaru', name: 'Nova Caruaru', fee: 10.0, etaMinutes: 60 },
-      { id: 'agamenon-magalhaes', name: 'Agamenon Magalhães', fee: 10.0, etaMinutes: 60 },
-      { id: 'vassoural', name: 'Vassoural', fee: 10.0, etaMinutes: 60 },
-      { id: 'alto-do-moura', name: 'Alto do Moura', fee: 12.0, etaMinutes: 70 },
-      { id: 'rendeiras', name: 'Rendeiras', fee: 12.0, etaMinutes: 70 },
-    ],
-  },
-  {
-    id: 'santa-cruz-do-capibaribe',
-    name: 'Santa Cruz do Capibaribe',
-    state: 'PE',
-    // ~75 km da sede: rota agendada, não rota diária.
-    mode: 'scheduled',
-    deliveryDays: [2, 5], // terça e sexta
-    cutoffHour: 12,
-    minOrder: 80.0,
-    freeShippingThreshold: 150.0,
-    pickup: null,
-    zones: [
-      { id: 'sc-centro', name: 'Centro', fee: 15.0 },
-      { id: 'sc-nsg', name: 'Nossa Senhora das Graças', fee: 15.0 },
-      { id: 'sc-sao-jose', name: 'São José', fee: 15.0 },
-      { id: 'sc-xique-xique', name: 'Xique-Xique', fee: 18.0 },
-      { id: 'sc-alto-conceicao', name: 'Alto da Conceição', fee: 18.0 },
-      { id: 'sc-joao-paulo-ii', name: 'João Paulo II', fee: 18.0 },
-      { id: 'sc-santa-terezinha', name: 'Santa Terezinha', fee: 18.0 },
-      { id: 'sc-bela-vista', name: 'Bela Vista', fee: 20.0 },
-      { id: 'sc-para', name: 'Distrito do Pará', fee: 25.0 },
-    ],
-  },
-  {
+    // SEDE. Rota própria, entrega no mesmo dia, frete barato.
     id: 'taquaritinga-do-norte',
     name: 'Taquaritinga do Norte',
     state: 'PE',
-    // ~40 km da sede: agendada, mas pode virar diária quando o volume justificar.
+    active: true,
+    mode: 'same_day',
+    minOrder: 30.0,
+    freeShippingThreshold: 100.0,
+    pickup: {
+      address: 'CONFIRME: endereço da sede — Centro, Taquaritinga do Norte',
+      hours: 'seg a sex 8h–18h, sáb 8h–14h',
+    },
+    zones: [
+      { id: 'tq-centro', name: 'Centro', fee: 4.0, etaMinutes: 30 },
+      { id: 'tq-alto-do-cruzeiro', name: 'Alto do Cruzeiro', fee: 5.0, etaMinutes: 35 },
+      { id: 'tq-bela-vista', name: 'Bela Vista', fee: 5.0, etaMinutes: 35 },
+      { id: 'tq-cachoeira', name: 'Cachoeira', fee: 6.0, etaMinutes: 40 },
+      { id: 'tq-serra-do-vento', name: 'Serra do Vento', fee: 10.0, etaMinutes: 60 },
+      { id: 'tq-zona-rural', name: 'Zona rural / sítios', fee: 12.0, etaMinutes: 70 },
+    ],
+  },
+  {
+    // ~30 km da sede. Rota em dias fixos até o volume justificar rota diária.
+    id: 'santa-cruz-do-capibaribe',
+    name: 'Santa Cruz do Capibaribe',
+    state: 'PE',
+    active: true,
     mode: 'scheduled',
-    deliveryDays: [4], // quinta
+    deliveryDays: [2, 5], // terça e sexta
     cutoffHour: 12,
     minOrder: 60.0,
-    freeShippingThreshold: 120.0,
+    freeShippingThreshold: 130.0,
     pickup: null,
     zones: [
-      { id: 'tq-centro', name: 'Centro', fee: 12.0 },
-      { id: 'tq-alto-do-cruzeiro', name: 'Alto do Cruzeiro', fee: 12.0 },
-      { id: 'tq-bela-vista', name: 'Bela Vista', fee: 12.0 },
-      { id: 'tq-serra-do-vento', name: 'Serra do Vento', fee: 18.0 },
-      { id: 'tq-cachoeira', name: 'Cachoeira', fee: 15.0 },
+      { id: 'sc-centro', name: 'Centro', fee: 10.0 },
+      { id: 'sc-nsg', name: 'Nossa Senhora das Graças', fee: 10.0 },
+      { id: 'sc-sao-jose', name: 'São José', fee: 10.0 },
+      { id: 'sc-xique-xique', name: 'Xique-Xique', fee: 12.0 },
+      { id: 'sc-alto-conceicao', name: 'Alto da Conceição', fee: 12.0 },
+      { id: 'sc-joao-paulo-ii', name: 'João Paulo II', fee: 12.0 },
+      { id: 'sc-santa-terezinha', name: 'Santa Terezinha', fee: 12.0 },
+      { id: 'sc-bela-vista', name: 'Bela Vista', fee: 14.0 },
+      { id: 'sc-para', name: 'Distrito do Pará', fee: 18.0 },
+    ],
+  },
+  {
+    // ~50 km da sede. Desligada de propósito: cadeia de frio nessa distância
+    // precisa ser resolvida antes de prometer entrega. Vire `active: true`
+    // quando a caixa térmica e a rota estiverem definidas.
+    id: 'caruaru',
+    name: 'Caruaru',
+    state: 'PE',
+    active: false,
+    mode: 'scheduled',
+    deliveryDays: [3], // quarta
+    cutoffHour: 12,
+    minOrder: 120.0,
+    freeShippingThreshold: 250.0,
+    pickup: null,
+    zones: [
+      { id: 'cr-centro', name: 'Centro', fee: 20.0 },
+      { id: 'cr-mauricio-de-nassau', name: 'Maurício de Nassau', fee: 20.0 },
+      { id: 'cr-petropolis', name: 'Petrópolis', fee: 22.0 },
+      { id: 'cr-universitario', name: 'Universitário', fee: 22.0 },
+      { id: 'cr-indianopolis', name: 'Indianópolis', fee: 25.0 },
+      { id: 'cr-boa-vista', name: 'Boa Vista', fee: 25.0 },
+      { id: 'cr-salgado', name: 'Salgado', fee: 25.0 },
+      { id: 'cr-alto-do-moura', name: 'Alto do Moura', fee: 30.0 },
     ],
   },
 ];
 
-/** Cidade padrão: onde fica a operação. */
-export const DEFAULT_CITY_ID = 'caruaru';
+/** Só as cidades que o cliente pode escolher hoje. */
+export const ACTIVE_CITIES = CITIES.filter((c) => c.active);
+
+/** Cidade padrão: a sede. */
+export const DEFAULT_CITY_ID = 'taquaritinga-do-norte';
 
 /** Mínimo para retirada no local — sem custo de rota, não precisa do mínimo cheio. */
 export const PICKUP_MIN_ORDER = 0;

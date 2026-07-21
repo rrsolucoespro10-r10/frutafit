@@ -9,25 +9,45 @@ export interface Addon {
   price: number;
 }
 
+export type VariantId = 'unit' | 'pack10';
+
+/**
+ * Formato de venda. O pacote é o produto principal do negócio: o cliente
+ * abastece a semana de uma vez e a rota entrega uma vez só. A unidade avulsa
+ * existe para quem quer experimentar antes de comprar dez.
+ */
+export interface ProductVariant {
+  id: VariantId;
+  /** "Pacote semanal · 10 unidades" */
+  label: string;
+  /** "10 un" — para caber na sacola e na mensagem */
+  shortLabel: string;
+  /** Quantas porções vêm dentro. Multiplica o preço dos adicionais. */
+  units: number;
+  price: number;
+}
+
 export interface Product {
   id: string;
   name: string;
   tagline: string;
   category: Category;
-  price: number;
-  weight: string;
-  yieldVolume: string;
+  /** Peso e rendimento de UMA porção, não do pacote. */
+  unitWeight: string;
+  unitYield: string;
   calories: number;
   ingredients: string[];
   image: string;
   isPopular?: boolean;
   isAvailable?: boolean;
+  variants: ProductVariant[];
 }
 
 export interface CartItem {
-  /** id derivado de produto + adicionais escolhidos */
+  /** id derivado de produto + formato + adicionais escolhidos */
   cartItemId: string;
   product: Product;
+  variant: ProductVariant;
   quantity: number;
   selectedAddons: Addon[];
   notes?: string;

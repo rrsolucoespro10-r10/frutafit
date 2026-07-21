@@ -1,7 +1,7 @@
 import { ArrowRight, Minus, Plus, ShoppingBag, Trash2, X } from 'lucide-react';
 import type { CartItem, OrderTotals } from '../types';
 import { brl } from '../lib/format';
-import { lineTotal, unitPrice } from '../lib/cart';
+import { itemPrice, lineTotal } from '../lib/cart';
 import { useModalBehavior } from '../hooks/useModalBehavior';
 
 interface Props {
@@ -113,9 +113,16 @@ export function CartDrawer({
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                      <h4 className="font-semibold text-slate-800 text-sm leading-tight">
-                        {item.product.name}
-                      </h4>
+                      <div className="min-w-0">
+                        <h4 className="font-semibold text-slate-800 text-sm leading-tight">
+                          {item.product.name}
+                        </h4>
+                        {/* O formato precisa estar visível: sem isso, "2x Kit
+                            Green Detox" pode ser 2 porções ou 20. */}
+                        <span className="inline-block mt-0.5 text-[10px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded">
+                          {item.variant.shortLabel}
+                        </span>
+                      </div>
                       <button
                         type="button"
                         onClick={() => onRemove(item.cartItemId)}
@@ -133,7 +140,14 @@ export function CartDrawer({
                         {item.selectedAddons.map((addon) => (
                           <li key={addon.id} className="text-[11px] text-slate-500">
                             + {addon.shortName}{' '}
-                            <span className="text-slate-400">({brl(addon.price)})</span>
+                            {/* Preço já multiplicado pelo tamanho do pacote,
+                                igual ao que o modal cobrou. Mostrar o valor
+                                por porção aqui faria a soma da sacola parecer
+                                errada para o cliente. */}
+                            <span className="text-slate-400">
+                              ({brl(addon.price * item.variant.units)}
+                              {item.variant.units > 1 && ` · ${brl(addon.price)} × ${item.variant.units}`})
+                            </span>
                           </li>
                         ))}
                       </ul>
@@ -166,7 +180,7 @@ export function CartDrawer({
 
                       <div className="text-right">
                         <p className="text-[10px] text-slate-400">
-                          {brl(unitPrice(item))} cada
+                          {brl(itemPrice(item))} cada
                         </p>
                         <p className="text-sm font-bold text-emerald-700">{brl(lineTotal(item))}</p>
                       </div>

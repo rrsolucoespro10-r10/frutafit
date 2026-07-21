@@ -14,16 +14,32 @@ npm run build                # tsc -b && vite build
 
 `.env.local` já é ignorado pelo git (`*.local`).
 
+## O que se vende
+
+Cada kit tem dois formatos ([`src/data/products.ts`](src/data/products.ts)):
+
+- **1 unidade** — porta de entrada, para quem nunca provou.
+- **Pacote semanal · 10 unidades** — o carro-chefe. Uma rota abastece a semana
+  inteira do cliente, com preço por porção menor.
+
+Adicional é cobrado **por porção** e multiplicado pelo tamanho do pacote: whey
+num pacote de 10 vai em dez porções e custa dez vezes. A tela mostra a conta
+(`R$ 4,50 × 10`) para não parecer erro.
+
 ## Área de cobertura
 
-Operação no Agreste de Pernambuco. Cada cidade é uma entrada em `CITIES`
-([`src/config.ts`](src/config.ts)) com a sua própria regra:
+Operação no Agreste de Pernambuco, sede em Taquaritinga do Norte. Cada cidade é
+uma entrada em `CITIES` ([`src/config.ts`](src/config.ts)) com regra própria:
 
-| Cidade                   | Modo        | Rota            | Mínimo | Frete grátis |
-| ------------------------ | ----------- | --------------- | ------ | ------------ |
-| Caruaru (sede)           | `same_day`  | diária          | R$ 35  | R$ 60        |
-| Taquaritinga do Norte    | `scheduled` | quinta          | R$ 60  | R$ 120       |
-| Santa Cruz do Capibaribe | `scheduled` | terça e sexta   | R$ 80  | R$ 150       |
+| Cidade                   | Modo        | Rota          | Mínimo | Frete grátis |
+| ------------------------ | ----------- | ------------- | ------ | ------------ |
+| Taquaritinga (sede)      | `same_day`  | diária        | R$ 30  | R$ 100       |
+| Santa Cruz do Capibaribe | `scheduled` | terça e sexta | R$ 60  | R$ 130       |
+| Caruaru (~50 km)         | `scheduled` | **desligada** | R$ 120 | R$ 250       |
+
+Caruaru está com `active: false`: a cidade continua cadastrada, só não aparece
+para o cliente. Vire para `true` quando a cadeia de frio nos ~50 km estiver
+resolvida — não antes de saber quanto tempo o produto aguenta em trânsito.
 
 `same_day` promete minutos; `scheduled` promete **data**. Produto congelado
 viajando 75 km sem dia certo é reclamação garantida — por isso cidade distante
@@ -90,10 +106,12 @@ que formata texto não deve arrastar React junto.
 
 ## Pontos em aberto (decisão de negócio, não de código)
 
-- **Bairros e taxas das três cidades** precisam ser confirmados contra a rota real.
-- **Preços, gramatura e rendimento dos kits** ainda são os de exemplo.
-- **Cadeia de frio até Santa Cruz (75 km).** O código já promete data em vez de
-  minutos, mas a caixa térmica e o tempo máximo em trânsito são decisão de
-  operação — e é o que determina se dá para atender a cidade toda ou só um raio.
+- **Bairros e taxas** precisam ser confirmados contra a rota real.
+- **Preços dos kits são placeholder.** Monte a partir do seu custo por porção,
+  não do preço do concorrente. Se o pacote de 10 não tiver margem melhor que a
+  unidade, o modelo semanal entrega o mesmo trabalho por menos dinheiro.
+- **Cadeia de frio.** O código já promete data em vez de minutos nas cidades
+  agendadas, mas a caixa térmica e o tempo máximo em trânsito são decisão de
+  operação — e é o que determina se Caruaru entra ou não.
 - **Imagens hospedadas no Unsplash.** Além de não serem o produto real, são
   dependência externa no caminho crítico do carregamento em 4G.

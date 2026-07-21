@@ -47,7 +47,13 @@ export function buildOrderMessage(
   lines.push('');
   lines.push('🛒 *Itens*');
   cart.forEach((item) => {
-    lines.push(`• *${item.quantity}x ${item.product.name}* — ${brl(lineTotal(item))}`);
+    // O formato e o total de porções vão explícitos: é o que a cozinha usa
+    // para separar, e "2x Kit Green Detox" sozinho pode ser 2 ou 20 porções.
+    const portions = item.variant.units * item.quantity;
+    lines.push(
+      `• *${item.quantity}x ${item.product.name}* (${item.variant.shortLabel}) — ${brl(lineTotal(item))}`,
+    );
+    lines.push(`   └ total: ${portions} ${portions === 1 ? 'porção' : 'porções'}`);
     if (item.selectedAddons.length > 0) {
       lines.push(`   └ adicionais: ${item.selectedAddons.map((a) => a.shortName).join(', ')}`);
     }

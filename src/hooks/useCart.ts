@@ -1,19 +1,36 @@
 import { useCallback, useMemo } from 'react';
-import type { Addon, CartItem, DeliveryType, OrderTotals, Product } from '../types';
+import type {
+  Addon,
+  CartItem,
+  DeliveryType,
+  OrderTotals,
+  Product,
+  ProductVariant,
+} from '../types';
 import { MAX_ITEM_QUANTITY, PICKUP_MIN_ORDER, getCity, getDeliveryFee } from '../config';
 import { buildCartItemId, lineTotal } from '../lib/cart';
 import { usePersistentState } from './usePersistentState';
 
 export function useCart() {
-  const [cart, setCart] = usePersistentState<CartItem[]>('fruta_fit_cart_v2', []);
+  // v3: o item salvo em v2 não tem `variant`. Hidratar aquele formato aqui
+  // faria itemPrice ler `undefined.price` e derrubar o app na abertura, para
+  // todo cliente que tinha sacola pendente. A virada de chave descarta o
+  // formato antigo em vez de tentar adivinhar o que ele comprou.
+  const [cart, setCart] = usePersistentState<CartItem[]>('fruta_fit_cart_v3', []);
 
   const addItem = useCallback(
-    (product: Product, quantity: number, selectedAddons: Addon[], notes?: string) => {
-      const cartItemId = buildCartItemId(product.id, selectedAddons);
+    (
+      product: Product,
+      variant: ProductVariant,
+      quantity: number,
+      selectedAddons: Addon[],
+      notes?: string,
+    ) => {
+      const cartItemId = buildCartItemId(product.id, variant.id, selectedAddons);
       setCart((prev) => {
         const index = prev.findIndex((i) => i.cartItemId === cartItemId);
         if (index === -1) {
-          return [...prev, { cartItemId, product, quantity, selectedAddons, notes }];
+          return [...prev, { cartItemId, product, variant, quantity, selectedAddons, notes }];
         }
         // Cópia imutável do item: mutar o objeto (mesmo copiando o array)
         // não dispara re-render confiável e persiste estado sujo no storage.

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { MapPin, Search, ShieldCheck, ShoppingBag, Sparkles, X } from 'lucide-react';
-import type { Addon, CustomerDetails, Product } from './types';
+import type { Addon, CustomerDetails, Product, ProductVariant } from './types';
 import { CATEGORIES, PRODUCTS } from './data/products';
 import { DEFAULT_CITY_ID, getCity, getZone, isStoreOpen } from './config';
 import { brl, normalize } from './lib/format';
@@ -79,11 +79,12 @@ export default function App() {
 
   const handleAddToCart = (
     product: Product,
+    variant: ProductVariant,
     quantity: number,
     addons: Addon[],
     notes: string,
   ) => {
-    addItem(product, quantity, addons, notes);
+    addItem(product, variant, quantity, addons, notes);
     setActiveProduct(null);
     setIsCartOpen(true);
   };

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Send, Store, Truck, X } from 'lucide-react';
 import type { CustomerDetails, FormErrors, OrderTotals, PaymentMethod } from '../types';
-import { CITIES, PAYMENT_LABELS, deliveryPromise, getCity } from '../config';
+import { ACTIVE_CITIES, PAYMENT_LABELS, deliveryPromise, getCity } from '../config';
 import { brl, isValidPhone, maskPhone } from '../lib/format';
 import { useModalBehavior } from '../hooks/useModalBehavior';
 
@@ -198,7 +198,7 @@ export function CheckoutModal({
                   onChange={(e) => handleCityChange(e.target.value)}
                   className={`${inputClass(errors.city)} bg-white`}
                 >
-                  {CITIES.map((c) => (
+                  {ACTIVE_CITIES.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name} — {c.state}
                     </option>
