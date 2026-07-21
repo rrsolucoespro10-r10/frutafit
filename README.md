@@ -16,30 +16,47 @@ npm run build                # tsc -b && vite build
 
 ## O que se vende
 
-Cada kit tem dois formatos ([`src/data/products.ts`](src/data/products.ts)):
+Um formato só: **pacote com 10 unidades**
+([`src/data/products.ts`](src/data/products.ts)). O tipo continua suportando
+várias variantes, então acrescentar um pacote de 20 ou uma unidade avulsa depois
+é só adicionar na lista — com um formato só, o seletor não aparece na tela.
 
-- **1 unidade** — porta de entrada, para quem nunca provou.
-- **Pacote semanal · 10 unidades** — o carro-chefe. Uma rota abastece a semana
-  inteira do cliente, com preço por porção menor.
+Como o preço do pacote assusta na primeira olhada, a vitrine e o modal mostram
+sempre o **preço por porção** ao lado. É o número que sustenta o valor.
 
-Adicional é cobrado **por porção** e multiplicado pelo tamanho do pacote: whey
-num pacote de 10 vai em dez porções e custa dez vezes. A tela mostra a conta
-(`R$ 4,50 × 10`) para não parecer erro.
+### Como calcular o preço
+
+```
+preço do pacote = (custo por porção × 10) ÷ (1 − margem desejada)
+```
+
+Custo por porção = fruta + embalagem + energia do freezer + mão de obra.
+Divida pelo **complemento** da margem; somar 30% ao custo dá 23% de margem, não
+30%. O frete não entra: é cobrado à parte, por bairro.
+
+Adicional é cobrado **por porção** e multiplicado pelo tamanho do pacote — whey
+num pacote de 10 vai em dez porções. A tela mostra a conta (`R$ 4,50 × 10`) para
+não parecer erro.
 
 ## Área de cobertura
 
-Operação no Agreste de Pernambuco, sede em Taquaritinga do Norte. Cada cidade é
-uma entrada em `CITIES` ([`src/config.ts`](src/config.ts)) com regra própria:
+Operação no Agreste de Pernambuco, sede em Taquaritinga do Norte. Entrega rápida
+estilo delivery: a promessa é tempo, não data. Cada cidade é uma entrada em
+`CITIES` ([`src/config.ts`](src/config.ts)):
 
-| Cidade                   | Modo        | Rota          | Mínimo | Frete grátis |
-| ------------------------ | ----------- | ------------- | ------ | ------------ |
-| Taquaritinga (sede)      | `same_day`  | diária        | R$ 30  | R$ 100       |
-| Santa Cruz do Capibaribe | `scheduled` | terça e sexta | R$ 60  | R$ 130       |
-| Caruaru (~50 km)         | `scheduled` | **desligada** | R$ 120 | R$ 250       |
+| Cidade                   | Frete       | Previsão   | Frete grátis |
+| ------------------------ | ----------- | ---------- | ------------ |
+| Taquaritinga (sede)      | R$ 5–12     | 30–60 min  | R$ 120       |
+| Santa Cruz do Capibaribe | R$ 12–20    | 70–95 min  | R$ 160       |
+| Caruaru (~50 km)         | **desligada** | —        | —            |
 
-Caruaru está com `active: false`: a cidade continua cadastrada, só não aparece
-para o cliente. Vire para `true` quando a cadeia de frio nos ~50 km estiver
-resolvida — não antes de saber quanto tempo o produto aguenta em trânsito.
+Bairros vieram de base pública de CEP e de índice de localidades. Toda cidade
+termina com a opção **"Outro — confirmamos no WhatsApp"**: nenhuma lista cobre
+condomínio novo ou apelido de rua, e sem essa saída quem não se acha na lista
+fecha o app e some.
+
+Caruaru está com `active: false`: continua cadastrada, só não aparece para o
+cliente. Vire para `true` quando a cadeia de frio nos ~50 km estiver resolvida.
 
 `same_day` promete minutos; `scheduled` promete **data**. Produto congelado
 viajando 75 km sem dia certo é reclamação garantida — por isso cidade distante

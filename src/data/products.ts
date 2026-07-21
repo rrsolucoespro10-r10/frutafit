@@ -17,33 +17,34 @@ export const CATEGORIES: { id: Category | 'all'; label: string }[] = [
   { id: 'tropical', label: '🌴 Tropical' },
 ];
 
+/** Quantas porções vêm no pacote. Único formato de venda hoje. */
+export const PACK_SIZE = 10;
+
 /**
  * ┌──────────────────────────────────────────────────────────────────────────┐
- * │ PREÇOS SÃO PLACEHOLDER — TROQUE ANTES DE DIVULGAR O LINK                 │
- * │ Monte a partir do SEU custo por porção (fruta + embalagem + energia +    │
- * │ mão de obra + frete), não a partir do preço do concorrente. Se o pacote  │
- * │ não tiver margem melhor que a unidade, o modelo semanal trabalha contra  │
- * │ você: entrega o mesmo trabalho por menos dinheiro.                       │
+ * │ PREÇOS SÃO PLACEHOLDER — CALCULE OS SEUS ANTES DE DIVULGAR O LINK        │
+ * │                                                                          │
+ * │ preço = (custo por porção × 10) ÷ (1 − margem desejada)                  │
+ * │                                                                          │
+ * │ Custo por porção = fruta + embalagem + energia do freezer + mão de obra. │
+ * │ Divida pelo COMPLEMENTO da margem, não multiplique pela margem: somar    │
+ * │ 30% ao custo dá 23% de margem, não 30%. É o erro que mais come lucro de  │
+ * │ operação pequena.                                                        │
+ * │                                                                          │
+ * │ E o frete não entra aqui: ele é cobrado à parte, por bairro.             │
  * └──────────────────────────────────────────────────────────────────────────┘
  *
- * O pacote de 10 é o carro-chefe: uma rota entrega a semana inteira do cliente.
- * A unidade avulsa existe como porta de entrada — quem nunca provou dificilmente
- * compra dez de primeira.
+ * A estrutura de variantes continua no tipo de propósito: no dia em que existir
+ * um pacote de 20 ou uma unidade avulsa, é só acrescentar aqui — nenhum
+ * componente precisa mudar. Com um formato só, o seletor não aparece na tela.
  */
-function variants(unitPrice: number, packPrice: number): ProductVariant[] {
+function variants(packPrice: number): ProductVariant[] {
   return [
     {
-      id: 'unit',
-      label: '1 unidade — para experimentar',
-      shortLabel: '1 un',
-      units: 1,
-      price: unitPrice,
-    },
-    {
       id: 'pack10',
-      label: 'Pacote semanal · 10 unidades',
-      shortLabel: '10 un',
-      units: 10,
+      label: `Pacote com ${PACK_SIZE} unidades`,
+      shortLabel: `${PACK_SIZE} un`,
+      units: PACK_SIZE,
       price: packPrice,
     },
   ];
@@ -70,7 +71,7 @@ export const PRODUCTS: Product[] = [
       'https://images.unsplash.com/photo-1610970881699-44a5587cabec?auto=format&fit=crop&w=600&q=80',
     isPopular: true,
     isAvailable: true,
-    variants: variants(14.9, 119.0),
+    variants: variants(59.9),
   },
   {
     id: 'kit-whey-red-boost',
@@ -85,7 +86,7 @@ export const PRODUCTS: Product[] = [
       'https://images.unsplash.com/photo-1553530666-ba11a7da3888?auto=format&fit=crop&w=600&q=80',
     isPopular: true,
     isAvailable: true,
-    variants: variants(18.9, 152.0),
+    variants: variants(74.9),
   },
   {
     id: 'kit-tropical-energy',
@@ -99,7 +100,7 @@ export const PRODUCTS: Product[] = [
     image:
       'https://images.unsplash.com/photo-1623065422902-30a2d299bbe4?auto=format&fit=crop&w=600&q=80',
     isAvailable: true,
-    variants: variants(15.9, 127.0),
+    variants: variants(64.9),
   },
   {
     id: 'kit-imuno-c',
@@ -113,7 +114,7 @@ export const PRODUCTS: Product[] = [
     image:
       'https://images.unsplash.com/photo-1600271886742-f049cd451bba?auto=format&fit=crop&w=600&q=80',
     isAvailable: true,
-    variants: variants(13.9, 111.0),
+    variants: variants(54.9),
   },
   {
     id: 'kit-coco-creme',
@@ -128,7 +129,7 @@ export const PRODUCTS: Product[] = [
       'https://images.unsplash.com/photo-1502741126161-b048400d085d?auto=format&fit=crop&w=600&q=80',
     isPopular: true,
     isAvailable: true,
-    variants: variants(16.5, 132.0),
+    variants: variants(62.9),
   },
   {
     id: 'kit-fit-matcha',
@@ -142,6 +143,6 @@ export const PRODUCTS: Product[] = [
     image:
       'https://images.unsplash.com/photo-1536935338788-846bb9981813?auto=format&fit=crop&w=600&q=80',
     isAvailable: true,
-    variants: variants(17.5, 140.0),
+    variants: variants(69.9),
   },
 ];

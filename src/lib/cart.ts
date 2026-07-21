@@ -48,12 +48,3 @@ export function pricePerUnit(variant: ProductVariant): number {
 export function cheapestVariant(product: Product): ProductVariant {
   return product.variants.reduce((a, b) => (a.price <= b.price ? a : b));
 }
-
-/** Quanto por cento o pacote economiza contra comprar avulso. 0 se não houver. */
-export function packSavingsPercent(product: Product): number {
-  const unit = product.variants.find((v) => v.units === 1);
-  const pack = product.variants.find((v) => v.units > 1);
-  if (!unit || !pack) return 0;
-  const saving = 1 - pricePerUnit(pack) / pricePerUnit(unit);
-  return Math.round(saving * 100);
-}

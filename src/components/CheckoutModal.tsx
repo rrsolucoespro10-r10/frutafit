@@ -58,7 +58,6 @@ export function CheckoutModal({
   const [errors, setErrors] = useState<FormErrors>({});
   const isDelivery = customer.deliveryType === 'delivery';
   const city = getCity(customer.city);
-  const isScheduled = city.mode === 'scheduled';
 
   useModalBehavior(onClose);
 
@@ -206,13 +205,13 @@ export function CheckoutModal({
                 </select>
                 <FieldError message={errors.city} />
 
-                {/* Rota agendada: a promessa é data, nunca minutos. Dizer isso
-                    aqui, antes do pagamento, evita a cobrança de "cadê meu
-                    pedido?" duas horas depois. */}
-                {isScheduled && (
+                {/* A previsão só aparece depois do bairro escolhido: antes
+                    disso qualquer número seria chute, e prometer errado no
+                    checkout custa mais caro que não prometer. */}
+                {customer.neighborhood && (
                   <p className="text-xs text-emerald-900 bg-emerald-50 border border-emerald-100 rounded-lg p-2.5 mt-2">
-                    Em {city.name} entregamos em dias fixos. Seu pedido chega{' '}
-                    <strong>{deliveryPromise(city, customer.neighborhood)}</strong>.
+                    Entrega em <strong>{deliveryPromise(city.id, customer.neighborhood)}</strong>{' '}
+                    depois da confirmação no WhatsApp.
                   </p>
                 )}
               </div>

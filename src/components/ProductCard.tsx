@@ -1,7 +1,7 @@
 import { Plus } from 'lucide-react';
 import type { Product } from '../types';
 import { brl } from '../lib/format';
-import { cheapestVariant, packSavingsPercent } from '../lib/cart';
+import { cheapestVariant, pricePerUnit } from '../lib/cart';
 
 interface Props {
   product: Product;
@@ -9,10 +9,8 @@ interface Props {
 }
 
 export function ProductCard({ product, onSelect }: Props) {
-  // "A partir de" usa a unidade avulsa: mostrar o preço do pacote na vitrine
-  // faria o cliente achar caro antes de entender que são 10 porções.
   const entry = cheapestVariant(product);
-  const savings = packSavingsPercent(product);
+  const multiple = product.variants.length > 1;
 
   return (
     <button
@@ -41,8 +39,13 @@ export function ProductCard({ product, onSelect }: Props) {
               {product.name}
             </h4>
             <span className="text-right shrink-0">
-              <span className="block text-[9px] text-slate-400 leading-none">a partir de</span>
-              <span className="text-xs font-extrabold text-emerald-700">{brl(entry.price)}</span>
+              {multiple && (
+                <span className="block text-[9px] text-slate-400 leading-none">a partir de</span>
+              )}
+              <span className="text-sm font-extrabold text-emerald-700">{brl(entry.price)}</span>
+              <span className="block text-[9px] text-slate-400 leading-none">
+                {entry.shortLabel}
+              </span>
             </span>
           </div>
 
@@ -66,19 +69,18 @@ export function ProductCard({ product, onSelect }: Props) {
         </div>
 
         <div className="flex items-center justify-between pt-2 border-t border-slate-50 mt-2">
-          {/* A economia do pacote é o argumento de venda central do modelo
-              semanal: aparece já na vitrine, não só depois de abrir o produto. */}
-          {savings > 0 ? (
-            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md">
-              Pacote 10 un · −{savings}%
+          {/* Preço por porção na vitrine: é o número que faz R$ 59,90 parecer
+              barato. Sem ele, o cliente compara o pacote inteiro com o copo de
+              R$ 12 da concorrência e acha caro. */}
+          <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium">
+            <span className="font-bold text-emerald-700">
+              {brl(pricePerUnit(entry))} por porção
             </span>
-          ) : (
-            <div className="flex items-center gap-2 text-[10px] text-slate-400 font-medium">
-              <span>{product.unitYield}</span>
-              <span aria-hidden>•</span>
-              <span>{product.calories} kcal</span>
-            </div>
-          )}
+            <span aria-hidden className="text-slate-300">
+              •
+            </span>
+            <span className="text-slate-400">{product.calories} kcal</span>
+          </div>
 
           <span className="bg-emerald-600 group-hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 shadow-sm shadow-emerald-600/20">
             <Plus className="w-3.5 h-3.5" />

@@ -35,7 +35,7 @@ export function buildOrderMessage(
     if (customer.complement.trim()) lines.push(`ℹ️ ${customer.complement}`);
     // A promessa vai junto do pedido para que a cozinha monte a rota pelo que
     // foi prometido ao cliente, e não pela ordem de chegada das mensagens.
-    lines.push(`🗓️ *Entrega prevista:* ${deliveryPromise(city, customer.neighborhood)}`);
+    lines.push(`🗓️ *Previsão:* ${deliveryPromise(city.id, customer.neighborhood)}`);
   } else {
     lines.push('🏪 *Retirada no local*');
     if (city.pickup) {

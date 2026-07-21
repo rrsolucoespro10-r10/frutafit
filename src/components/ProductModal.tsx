@@ -88,12 +88,26 @@ export function ProductModal({ product, onClose, onConfirm }: Props) {
               <span aria-hidden>•</span>
               <span>{product.calories} kcal</span>
             </div>
+
+            {/* Com o seletor de formato escondido, é aqui que o cliente entende
+                o que está levando: são 10 porções, e o preço por porção é o
+                número que sustenta o valor do pacote. */}
+            <div className="mt-3 flex items-center justify-between gap-3 bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2.5">
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-emerald-900 leading-tight">{variant.label}</p>
+                <p className="text-[11px] text-emerald-800/80">
+                  {brl(pricePerUnit(variant))} por porção · rende {variant.units} vitaminas
+                </p>
+              </div>
+              <span className="text-lg font-extrabold text-emerald-700 shrink-0">
+                {brl(variant.price)}
+              </span>
+            </div>
           </div>
 
-          {/* Escolha do formato. Fica antes dos adicionais de propósito: o
-              cliente decide o tamanho da compra enquanto ainda está animado
-              com o produto, não depois de somar extras. */}
-          <div>
+          {/* Seletor de formato só aparece quando há mais de um. Com uma opção
+              só, um "escolha" de item único é ruído puro na tela. */}
+          <div className={product.variants.length > 1 ? '' : 'hidden'}>
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
               Como você quer levar
             </h3>
